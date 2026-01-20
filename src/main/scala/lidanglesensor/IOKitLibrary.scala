@@ -26,12 +26,12 @@ object IOKit {
   def mgr: Pointer = io.IOHIDManagerCreate(null, 0)
   def open(m: Pointer): Int = io.IOHIDManagerOpen(m, 0)
   def close(m: Pointer): Int = io.IOHIDManagerClose(m, 0)
-  def matching(m: Pointer, vid: Int, pid: Int, up: Int, u: Int): Unit = {
+  def matchSensor(m: Pointer): Unit = {
     def str(s: String) = cf.CFStringCreateWithCString(null, s, 0x08000100)
     def num(n: Int) = { val p = new Memory(4); p.setInt(0, n); cf.CFNumberCreate(null, 9, p) }
     io.IOHIDManagerSetDeviceMatching(m, cf.CFDictionaryCreate(null, 
-      Array(str("VendorID"), str("ProductID"), str("UsagePage"), str("Usage")),
-      Array(num(vid), num(pid), num(up), num(u)), 4, null, null))
+      Array(str("VendorID"), str("UsagePage"), str("Usage")),
+      Array(num(0x05AC), num(0x0020), num(0x008A)), 3, null, null))
   }
   def devices(m: Pointer): Array[Pointer] = {
     val s = io.IOHIDManagerCopyDevices(m); if (s == null) return Array()

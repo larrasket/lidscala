@@ -14,7 +14,7 @@ class Audio {
     data = a.readAllBytes()
     val info = new DataLine.Info(classOf[SourceDataLine], fmt)
     line = AudioSystem.getLine(info).asInstanceOf[SourceDataLine]
-    line.open(fmt, 512)
+    line.open(fmt, 4096)
     line.start()
     true
   } catch { case _: Exception => false }
@@ -22,13 +22,22 @@ class Audio {
   def setVol(v: Float): Unit = vol = v
   
   def write(): Unit = if (line != null && data != null) {
-    val avail = line.available()
-    if (avail > 0) {
-      val len = math.min(avail, data.length - pos)
-      val chunk = new Array[Byte](len)
-      var i = 0; while (i < len) { chunk(i) = (data(pos + i) * vol).toByte; i += 1 }
-      line.write(chunk, 0, len)
-      pos = (pos + len) % data.length
+    if (line.available() > 256) {
+      val chunk = new Array[Byte](256)
+      var i = 0
+      while (i < 256) {
+        val p = (pos + i) % data.length
+        val pNext = (p + 1) % data.length
+        
+        val s = ((data(pNext) << 8) | (data(p) & 0xFF)).toShort
+        val v = (s * vol).toInt.toShort
+        
+        chunk(i) = (v & 0xFF).toByte
+        chunk(i + 1) = ((v >> 8) & 0xFF).toByte
+        i += 2
+      }
+      line.write(chunk, 0, 256)
+      pos = (pos + 256) % data.length
     }
   }
   

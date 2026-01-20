@@ -6,10 +6,20 @@ object Main extends App {
   sys.addShutdownHook { a.close(); s.close() }
   var prev = 0.0; var vel = 0.0; var t = System.nanoTime()
   while (true) {
-    s.read.foreach { ang =>
-      val now = System.nanoTime(); val dt = (now - t) / 1e9
-      if (dt > 0.001 && dt < 1) { vel = 0.3 * math.abs(ang - prev) / dt + 0.7 * vel; prev = ang; t = now }
+    val now = System.nanoTime()
+    if (now - t > 16000000) { 
+      s.read.foreach { ang =>
+        val dt = (now - t) / 1e9
+        val inst = math.abs(ang - prev) / dt
+        if (inst > 0 || dt < 0.1) {
+           vel = 0.3 * inst + 0.7 * vel
+        } else {
+           vel = 0 
+        }
+        prev = ang
+      }
       a.setVol(if (vel < 1) 0 else if (vel > 100) 0 else (1 - vel / 100).toFloat)
+      t = now
     }
     a.write()
   }
