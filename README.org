@@ -1,0 +1,3 @@
+#+DATE: <2026-01-20 Tue 13:23>
+
+Implements the famous Lid Angel Door sensor meme, but in Scala
